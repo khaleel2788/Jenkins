@@ -1,0 +1,39 @@
+pipeline {
+    agent { label "JDK11" }
+    options { 
+        timeout(time: 1, unit: 'HOURS')
+        retry(2) 
+    // if this build takes more than 1hr it will be considered as failure it will try for 2 times and stops
+    }
+    triggers { 
+        cron('0 * * * *') 
+    // means build periodically for evey one hour (* * * * *) means poll scm -> if there is any changes done it will trigger automatically for every one minute
+    }
+    stages { 
+        stage('Source Code') {
+            git url: 'https://www.jenkins.io/doc/pipeline/steps/git/#git-git'
+                branch 'main'
+            }
+        stage('build the code') {
+            sh script: 'mvn clean package'
+            // if you working on windows there is separate link for windows, here we are working on linux
+        }
+        stage('reporting') {
+            junit testResults: 'target/surefire-reports/*.xml'
+            // reporting = archieving artifacts
+            // in jenkins All the work stored in workspace
+            // all the test results will be stored in .xml format at target/surefire-reports/*.xml
+        }
+    }
+    post {
+        success {
+            // send the succes email
+            echo "Success"
+        }
+        unsucess { 
+            // send the unsuccess email
+            echo 'failure'
+        }
+    }
+}
+
